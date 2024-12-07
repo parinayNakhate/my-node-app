@@ -112,6 +112,8 @@ const loginUser = asyncHandler(async(req,res)=>{
 
 
     const {email, username, password}=req.body
+
+    console.log(req.body);
        
     if(!(username || email)){
         throw new ApiError(400, "username or email is required")
@@ -125,8 +127,7 @@ const loginUser = asyncHandler(async(req,res)=>{
     
        
       const isPasswordValid = await bcrypt.compare(password, user.password)
-      console.log("login",password,user.password)
-        console.log(isPasswordValid)
+     
       if(!isPasswordValid){
         throw new ApiError(401, "invalid user credential")
       }
@@ -158,8 +159,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
         User.findByIdAndUpdate(req.user._id,
             {
 
-            $set:{
-                refreshToken:undefined
+            $unset:{
+                refreshToken:1
             },
             
         }, {
@@ -254,27 +255,18 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 })
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
-
-    const{fullname,email,emailToBeChanged, fullnameToBeChanged}=req.body
-    
-    
+    const{fullname,email}=req.body
     if(!(fullname || email)){
         throw new ApiError(401, "All fields required")
     }
-
-    const loggedinUser = await User.findOne({email})
-    console.log(loggedinUser)
- const user =  await User.findByIdAndUpdate(loggedinUser?._id,
+  const user =  await User.findByIdAndUpdate(req.user?._id,
     {
         $set:{
-            fullname:fullnameToBeChanged,
-            email:emailToBeChanged
+            fullname:fullname,
+            email:email
         }
   },{new:true}
 ).select("-password")
-
-console.log(user);
-
 return res.status(200)
         .json(new ApiResponse(200, user, "Account Details updated successfully"))
 })
